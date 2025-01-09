@@ -1,29 +1,67 @@
+#server:
+#  port: 8080
+#
+#spring:
+#  cloud:
+#    gateway:
+#      discovery:
+#        locator:
+#          enabled: true   # Active la localisation des routes via Eureka
+#          lower-case-service-id: false # Noms des services en minuscules
+#    loadbalancer:
+#      retry:
+#        enabled: true    # Réessayer en cas d'échec
+#
+#eureka:
+#  client:
+#    service-url:
+#      defaultZone: http://localhost:8761/eureka/
+#  instance:
+#    prefer-ip-address: true
+#
+#management:
+#  endpoints:
+#    web:
+#      exposure:
+#        include: "*"
+#  endpoint:
+#    gateway:
+#      enabled: true
+#
+#logging:
+#  level:
+#    org.springframework.cloud.gateway: DEBUG
+#    org.springframework.cloud.loadbalancer: DEBUG
 server:
   port: 8080
 
 spring:
   cloud:
     gateway:
+      routes:
+        - id: document-service-static
+          uri: http://localhost:8082  # Adresse directe de DOCUMENT_SERVICE
+          predicates:
+            - Path=/DOCUMENT_SERVICE/**  # Associe les requêtes avec le chemin à ce service
+          filters:
+            - RewritePath=/DOCUMENT_SERVICE/(?<remaining>.*), /${remaining}  # Réécrit l'URL pour enlever le préfixe
+        - id: user-service-static
+          uri: http://localhost:8081  # Adresse directe de USER_SERVICE
+          predicates:
+           - Path=/AUTH_SERVICE/**  # Associe les requêtes avec le chemin à ce service
+          filters:
+                - RewritePath=/AUTH_SERVICE/(?<remaining>.*), /${remaining}  # Réécrit l'URL pour enlever le préfixe
       discovery:
         locator:
-          enabled: true   # Active la localisation des routes via Eureka
-          lower-case-service-id: false # Noms des services en minuscules
+          enabled: false  # Désactive la localisation dynamique via Eureka
     loadbalancer:
       retry:
-        enabled: true    # Réessayer en cas d'échec
-
-eureka:
-  client:
-    service-url:
-      defaultZone: http://localhost:8761/eureka/
-  instance:
-    prefer-ip-address: true
+        enabled: false  # Désactive le réessai en cas d'échec (non nécessaire pour routage statique)
 
 management:
   endpoints:
     web:
       exposure:
         include: "*"
-  endpoint:
-    gateway:
-      enabled: true
+
+
